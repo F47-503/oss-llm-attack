@@ -4,21 +4,24 @@ from pprint import pprint
 import sys
 import torch
 import zlib
-from transformers import AutoTokenizer, AutoModelForCausalLM, RobertaTokenizer, T5ForConditionalGeneration
+from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModelForSeq2SeqLM
 from tqdm import tqdm
 import warnings
 warnings.simplefilter("ignore")
+
+with open('hf_token') as token_file:
+    HF_TOKEN = token_file.read()
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f'Using device {device}')
 
 def parse_model_name(model_name):
     if 't5' in model_name.lower():
-        model = T5ForConditionalGeneration.from_pretrained(model_name, return_dict=True)
-        tokenizer = RobertaTokenizer.from_pretrained(model_name)
+        model = AutoModelForSeq2SeqLM.from_pretrained(model_name, token=HF_TOKEN)
+        tokenizer = AutoTokenizer.from_pretrained(model_name, token=HF_TOKEN, torch_dtype=torch.float16)
         return model, tokenizer
-    model = AutoModelForCausalLM.from_pretrained(model_name, return_dict=True)
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(model_name, token=HF_TOKEN)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, token=HF_TOKEN)
     return model, tokenizer
 
 def calculate_perplexity(sentence, model, tokenizer):
@@ -44,15 +47,15 @@ def print_best(metric, samples, scores1, scores2=None, n=10, out_file=None):
         pprint(samples[idx], stream=out_file)
         print('\n\n', file=out_file)
 
-def print_result(scores, samples, second_key=None, out_file=None, first_key="XL"):
+def print_result(scores, samples, second_key=None, out_file=None, first_key="XL", num_best_samples=10):
     if second_key:
         metric = np.log(scores[second_key]) / np.log(scores[first_key])
         print(f"======== top sample by ratio of {second_key} and {first_key} scores: ========", file=out_file)
-        print_best(metric, samples, scores[first_key], scores[second_key], out_file=out_file)
+        print_best(metric, samples, scores[first_key], scores[second_key], out_file=out_file, n=num_best_samples)
         return
     metric = -np.log(scores[first_key])
     print(f"======== top sample by {first_key} score: ========", file=out_file)
-    print_best(metric, samples, scores[first_key], out_file=out_file)
+    print_best(metric, samples, scores[first_key], out_file=out_file, n=num_best_samples)
 
 def main():
     if args.target_model_name == '':
@@ -60,9 +63,7 @@ def main():
         exit(-1)
     target_model, tokenizer = parse_model_name(args.target_model_name)
     tokenizer.padding_side = "left" 
-    tokenizer.pad_token = tokenizer.eos_token
-
-    target_model.config.pad_token_id = target_model.config.eos_token_id
+    
     target_model.eval()
     print('Main model loaded')
 
@@ -75,14 +76,14 @@ def main():
     with tqdm(total=args.N) as pbar:
         for _ in range(num_batches):
             # encode the prompts
-            prompts = ["<|endoftext|>"] * args.batch_size
+            prompts = [tokenizer.bos_token] * args.batch_size
             input_len = 1
-            inputs = tokenizer(prompts, return_tensors="pt", padding=True)
-
+            inputs = tokenizer(prompts, return_tensors="pt", padding=True).to(device)
+            if 't5' in args.target_model_name.lower():
+                inputs['decoder_input_ids'] = inputs['input_ids'].clone()
             # batch generation
             output_sequences = target_model.generate(
-                input_ids=inputs['input_ids'].to(device),
-                attention_mask=inputs['attention_mask'].to(device),
+                **inputs,
                 max_length=input_len + args.sequence_length,
                 do_sample=True, 
                 top_k=args.top_k, 
@@ -106,7 +107,7 @@ def main():
                 scores["XL"].append(perplexity_main)
                 scores["Lower"].append(perplexity_lower)
                 scores["zlib"].append(zlib_entropy)
-                
+            torch.cuda.empty_cache()
             pbar.update(args.batch_size)
 
     del target_model
@@ -114,7 +115,6 @@ def main():
     if args.second_model_name != 'None':
         second_model, second_tokenizer = parse_model_name(args.second_model_name)
         second_tokenizer.padding_side = "left" 
-        second_tokenizer.pad_token = second_tokenizer.eos_token
 
         second_model.eval()
         second_model.to(device)
@@ -139,15 +139,15 @@ def main():
         with open(args.output_file_name, 'w') as out_file:
             for key in scores:
                 if key == default_key:
-                    print_result(scores, samples, out_file=out_file, first_key=default_key)
+                    print_result(scores, samples, out_file=out_file, first_key=default_key, num_best_samples=args.top_result)
                     continue
-                print_result(scores, samples, key, out_file=out_file, first_key=default_key)
+                print_result(scores, samples, key, out_file=out_file, first_key=default_key, num_best_samples=args.top_result)
         return
     for key in scores:
         if key == default_key:
-            print_result(scores, samples, first_key=default_key)
+            print_result(scores, samples, first_key=default_key, num_best_samples=args.top_result)
             continue
-        print_result(scores, samples, key, first_key=default_key)
+        print_result(scores, samples, key, first_key=default_key, num_best_samples=args.top_result)
 
 
 def parse_arguments(argv):
@@ -159,6 +159,7 @@ def parse_arguments(argv):
     parser.add_argument('--sequence-length', type=int, default=256, help='Amount of generated tokens')
     parser.add_argument('--target-model-name', type=str, default='', help='Name of the target model')
     parser.add_argument('--second-model-name', type=str, default='', help='Name of second model for calculating perplexity')
+    parser.add_argument('--top-result', type=int, default=10, help='How many top results should be printed for each metric')
     return parser.parse_args(argv)
 
 if __name__ == '__main__':
