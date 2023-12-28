@@ -28,6 +28,8 @@ def parse_model_name(model_name):
         return model, tokenizer
     model = AutoModelForCausalLM.from_pretrained(model_name, token=HF_TOKEN)
     tokenizer = AutoTokenizer.from_pretrained(model_name, token=HF_TOKEN)
+    #for many gpt-like architectures they are equal to <|endoftext|>
+    tokenizer.pad_token = tokenizer.eos_token
     return model, tokenizer
 
 def calculate_perplexity(sentence, model, tokenizer):
@@ -50,7 +52,8 @@ def print_best(metric, samples, scores1, scores2=None, n=10, out_file=None):
         else:
             print(f"{i + 1}: first_score={scores1[idx]:.3f}, , score={metric[idx]:.3f}", file=out_file)
         print('\n\n', file=out_file)
-        pprint(samples[idx], stream=out_file)
+        #apply encoding in case of non-ascii symbols in samples (actual for starcoder)
+        pprint(samples[idx].encode("utf-8"), stream=out_file)
         print('\n\n', file=out_file)
 
 def print_result(scores, samples, second_key=None, out_file=None, first_key="XL", num_best_samples=10):
