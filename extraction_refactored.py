@@ -1,5 +1,6 @@
 import argparse
 import numpy as np
+import os
 from pprint import pprint
 import sys
 import torch
@@ -9,8 +10,13 @@ from tqdm import tqdm
 import warnings
 warnings.simplefilter("ignore")
 
-with open('hf_token') as token_file:
-    HF_TOKEN = token_file.read()
+#this one is for cases like starcoder 
+#when we need to download model which requires huggingface token
+token_file_directory = os.path.join(os.path.curdir, 'hf_token')
+HF_TOKEN = ''
+if os.path.isfile(token_file_directory):
+    with open('hf_token') as token_file:
+        HF_TOKEN = token_file.read()
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f'Using device {device}')
