@@ -53,7 +53,7 @@ Next you can use `dataset_downloading.py` to load subset of training set.
 
 
 ```
-python dataset_downloading.py --dataset-name codeparrot/github-code --separator \1 --escapechar \2 --languages-filename CodeT5languages --output-prefix t5_dataset
+python dataset_downloading.py --dataset-name codeparrot/github-code --separator \1 --escapechar \2 --languages-filename CodeT5languages --output-prefix t5_dataset --threshold-size 83886080 --max-chunks 11
 ```
 
 As the last step you can re-run the `example_analysis.ipynb` to get similar result.
