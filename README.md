@@ -46,14 +46,14 @@ First you'll need to generate samples.
 To do that, you can use `extraction_refactored.py`.
 
 ```
-python extraction_refactored.py --N 8000 --top-result 50 --output-file-name results_full --batch-size 32 --target-model-name Salesforce/codet5p-770m --second-model-name Salesforce/codet5p-220m --threshold-size 83886080 --max-chunks 11
+python extraction_refactored.py --N 8000 --top-result 50 --output-file-name results_full --batch-size 32 --target-model-name Salesforce/codet5p-770m --second-model-name Salesforce/codet5p-220m
 ```
 
 Next you can use `dataset_downloading.py` to load subset of training set.
 
 
 ```
-python dataset_downloading.py --dataset-name codeparrot/github-code --separator \1 --escapechar \2 --languages-filename CodeT5languages --output-prefix t5_dataset
+python dataset_downloading.py --dataset-name codeparrot/github-code --separator \1 --escapechar \2 --languages-filename CodeT5languages --output-prefix t5_dataset --threshold-size 83886080 --max-chunks 11
 ```
 
 As the last step you can re-run the `example_analysis.ipynb` to get similar result.
