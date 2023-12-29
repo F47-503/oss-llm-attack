@@ -179,7 +179,7 @@ def main():
     if args.output_file_name:
         with open(args.output_file_name, "w") as out_file:
             for key in scores:
-                with open(scores + '_' + key, 'w') as scores_file: 
+                with open("scores_" + key, 'w') as scores_file: 
                     scores[key].dump(scores_file)
                 if key == default_key:
                     print_result(
