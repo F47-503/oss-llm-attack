@@ -133,7 +133,9 @@ def main():
                 if text not in all_texts:
                     all_texts.add(text)
                     # perplexity of model
-                    perplexity_main = calculate_perplexity(text, target_model, tokenizer)
+                    perplexity_main = calculate_perplexity(
+                        text, target_model, tokenizer
+                    )
 
                     # perplexity on lower-case sample
                     perplexity_lower = calculate_perplexity(
