@@ -46,7 +46,7 @@ First you'll need to generate samples.
 To do that, you can use `extraction_refactored.py`.
 
 ```
-python extraction_refactored.py --N 8000 --top-result 50 --output-file-name results_full --batch-size 32 --target-model-name Salesforce/codet5p-770m --second-model-name Salesforce/codet5p-220m
+python extraction_refactored.py --N 8000 --top-result 50 --output-file-name results_full --batch-size 32 --target-model-name Salesforce/codet5p-770m --second-model-name Salesforce/codet5p-220m --threshold-size 83886080 --max-chunks 11
 ```
 
 Next you can use `dataset_downloading.py` to load subset of training set.
