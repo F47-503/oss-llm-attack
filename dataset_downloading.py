@@ -29,7 +29,7 @@ def parse_arguments(argv):
     parser.add_argument(
         "--threshold-size",
         type=int,
-        default=2**20,
+        default=None,
         help="Upper bound on size of one dataset chunk in bytes.",
     )
     parser.add_argument(
@@ -83,8 +83,10 @@ def main():
         print("Dataset name is not set")
         exit(-1)
 
+    filter_dict = {}
+
     if languages:
-        filter_dict = {args.language_field: languages}
+        filter_dict[args.language_field] = languages
     ds = load_dataset(
         args.dataset_name,
         streaming=True,
@@ -97,6 +99,9 @@ def main():
     dataset_counter = 0
 
     dataset = {}
+
+    if not args.threshold_size:
+        args.threshold_size = float("inf")
 
     for sample in ds:
         if not dataset:
