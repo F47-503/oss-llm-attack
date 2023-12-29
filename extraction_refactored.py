@@ -39,7 +39,7 @@ def parse_model_name(model_name):
 
 def calculate_perplexity(sentence, model, tokenizer):
     input_ids = torch.tensor(tokenizer.encode(sentence)).unsqueeze(0)
-    input_ids = input_ids.to(device)
+    input_ids = input_ids.to(model.device)
     with torch.no_grad():
         outputs = model(input_ids, labels=input_ids)
     loss, _ = outputs[:2]
@@ -149,6 +149,7 @@ def main():
             torch.cuda.empty_cache()
             pbar.update(args.batch_size)
 
+    # saving GPU memory
     del target_model
     torch.cuda.empty_cache()
     if args.second_model_name:
@@ -176,41 +177,24 @@ def main():
     scores["zlib"] = np.asarray(scores["zlib"])
 
     default_key = "XL"
+
+    params = {"first_key": default_key, "num_best_samples": args.top_result}
+
     if args.output_file_name:
         with open(args.output_file_name, "w") as out_file:
+            params["out_file"] = out_file
             for key in scores:
                 scores[key].dump("scores_" + key)
-                if key == default_key:
-                    print_result(
-                        scores,
-                        samples,
-                        out_file=out_file,
-                        first_key=default_key,
-                        num_best_samples=args.top_result,
-                    )
-                    continue
-                print_result(
-                    scores,
-                    samples,
-                    key,
-                    out_file=out_file,
-                    first_key=default_key,
-                    num_best_samples=args.top_result,
-                )
+                if key != default_key:
+                    params["second_key"] = key
+                print_result(scores, samples, **params)
         return
+
     for key in scores:
-        if key == default_key:
-            print_result(
-                scores, samples, first_key=default_key, num_best_samples=args.top_result
-            )
-            continue
-        print_result(
-            scores,
-            samples,
-            key,
-            first_key=default_key,
-            num_best_samples=args.top_result,
-        )
+        scores[key].dump("scores_" + key)
+        if key != default_key:
+            params["second_key"] = key
+        print_result(scores, samples, **params)
 
 
 def parse_arguments(argv):
