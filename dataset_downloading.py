@@ -33,18 +33,6 @@ def parse_arguments(argv):
         help="Upper bound on size of one dataset chunk in bytes.",
     )
     parser.add_argument(
-        "--separator",
-        type=str,
-        default=",",
-        help="Separator symbol for saved dataframe. Default is ','.",
-    )
-    parser.add_argument(
-        "--escapechar",
-        type=str,
-        default=None,
-        help="Separator symbol for saved dataframe. Default is None.",
-    )
-    parser.add_argument(
         "--max-chunks",
         type=int,
         default=1,
@@ -117,8 +105,8 @@ def main():
             pd.DataFrame(dataset).to_csv(
                 f"{args.output_prefix}{dataset_counter}",
                 index=False,
-                sep=args.separator,
-                escapechar=args.escapechar,
+                sep="\1",
+                escapechar="\2",
             )
             dataset = {}
             gc.collect()
