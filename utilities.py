@@ -37,7 +37,6 @@ def read_results(filename):
 
 
 def search_in_train(dataset_prefix, sample_texts, code_field):
-    print(dataset_prefix)
     res = sample_texts
     uniques = pd.Series(res).astype(str).drop_duplicates()
     parts = []
@@ -49,7 +48,6 @@ def search_in_train(dataset_prefix, sample_texts, code_field):
             df[df[code_field].apply(lambda x: any(s in str(x) for s in uniques))].copy()
         )
         counter += 1
-        next_dataset = os.path.join(os.getcwd(), dataset_prefix, str(counter))
-        print(next_dataset[-5])
+        next_dataset = os.path.join(os.getcwd(), dataset_prefix + str(counter))
         gc.collect()
     return pd.concat(parts)
