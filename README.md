@@ -24,14 +24,18 @@ To do that, you can use `extraction_refactored.py`.
 
 Example usage:
 
-`python extraction_refactored.py --N 40000 --top-result 50 --output-file-name codeT5_results --batch-size 32 --target-model-name Salesforce/codet5p-770m --second-model-name Salesforce/codet5p-220m`
+```
+python extraction_refactored.py --N 40000 --top-result 50 --output-file-name codeT5_results --batch-size 32 --target-model-name Salesforce/codet5p-770m --second-model-name Salesforce/codet5p-220m
+```
 
 In case you'll need to verify that samples belong to train dataset, you can use `dataset_downloading.py`.
 
 Examples:
 
-`python dataset_downloading.py --dataset-name bigcode/the-stack-dedup --separator \t --escapechar \2 --max-chunks 10 --threshold-size 83886080 --output-prefix datasets/starcoder_dataset`
+```
+python dataset_downloading.py --dataset-name bigcode/the-stack-dedup --separator \t --escapechar \2 --max-chunks 10 --threshold-size 83886080 --output-prefix datasets/starcoder_dataset
 
-`python dataset_downloading.py --dataset-name codeparrot/github-code --separator \t --escapechar \2 --languages-filename CodeT5languages`
+python dataset_downloading.py --dataset-name codeparrot/github-code --separator \t --escapechar \2 --languages-filename CodeT5languages
+```
 
-Also you can place your huggingface token to file 'hf_token' in the same directory as script, in case if you need to download model with limited access (e.g. starcoder)
+Also you can place your huggingface token to file `hf_token` in the same directory as script, in case if you need to download model with limited access (e.g. starcoder)
