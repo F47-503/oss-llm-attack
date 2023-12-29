@@ -109,7 +109,7 @@ def main():
 
     target_model.to(device)
     num_batches = int(np.ceil(args.N / args.batch_size))
-    all_texts = []
+    all_texts = set()
     with tqdm(total=args.N) as pbar:
         for _ in range(num_batches):
             # encode the prompts
@@ -128,24 +128,25 @@ def main():
             )
 
             texts = tokenizer.batch_decode(output_sequences, skip_special_tokens=True)
-            all_texts.append(texts)
 
             for text in texts:
-                # perplexity of model
-                perplexity_main = calculate_perplexity(text, target_model, tokenizer)
+                if text not in all_texts:
+                    all_texts.add(text)
+                    # perplexity of model
+                    perplexity_main = calculate_perplexity(text, target_model, tokenizer)
 
-                # perplexity on lower-case sample
-                perplexity_lower = calculate_perplexity(
-                    text.lower(), target_model, tokenizer
-                )
+                    # perplexity on lower-case sample
+                    perplexity_lower = calculate_perplexity(
+                        text.lower(), target_model, tokenizer
+                    )
 
-                # Zlib "entropy" of sample
-                zlib_entropy = len(zlib.compress(bytes(text, "utf-8")))
+                    # Zlib "entropy" of sample
+                    zlib_entropy = len(zlib.compress(bytes(text, "utf-8")))
 
-                samples.append(text)
-                scores["XL"].append(perplexity_main)
-                scores["Lower"].append(perplexity_lower)
-                scores["zlib"].append(zlib_entropy)
+                    samples.append(text)
+                    scores["XL"].append(perplexity_main)
+                    scores["Lower"].append(perplexity_lower)
+                    scores["zlib"].append(zlib_entropy)
             torch.cuda.empty_cache()
             pbar.update(args.batch_size)
 
