@@ -32,15 +32,15 @@ def read_results(filename):
         return first_scores, second_scores, sample_texts
     
 def search_in_train(dataset_prefix, sample_texts, code_field):
+    print(dataset_prefix)
     res = sample_texts
     uniques = pd.Series(res).astype(str).drop_duplicates()
     parts = []
     counter = 1
-    next_dataset = os.path.join(os.getcwd(), dataset_prefix, str(counter))
+    next_dataset = os.path.join(os.getcwd(), dataset_prefix + str(counter))
     while os.path.isfile(next_dataset):
         df = pd.read_table(next_dataset, sep='\1', escapechar='\2')
         parts.append(df[df[code_field].apply(lambda x: any(s in str(x) for s in uniques))].copy())
-        print(counter)
         counter += 1
         next_dataset = os.path.join(os.getcwd(), dataset_prefix, str(counter))
         gc.collect()
