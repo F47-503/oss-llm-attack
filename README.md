@@ -16,7 +16,7 @@ python extraction_refactored.py --N 40000 --top-result 50 --output-file-name cod
 Examples:
 
 ```
-python dataset_downloading.py --dataset-name bigcode/the-stack-dedup --max-chunks 10 --threshold-size 83886080 --output-prefix datasets/starcoder_dataset
+python dataset_downloading.py --dataset-name bigcode/the-stack-dedup --max-chunks 10 --max-samples 1000000 --output-prefix datasets/starcoder_dataset
 ```
 ```
 python dataset_downloading.py --dataset-name codeparrot/github-code --languages-filename CodeT5languages
@@ -53,7 +53,7 @@ Next you can use `dataset_downloading.py` to load subset of training set.
 
 
 ```
-python dataset_downloading.py --dataset-name codeparrot/github-code --languages-filename CodeT5languages --output-prefix t5_dataset --threshold-size 83886080 --max-chunks 11
+python dataset_downloading.py --dataset-name codeparrot/github-code --languages-filename CodeT5languages --output-prefix t5_dataset --max-samples 1000000 --max-chunks 11
 ```
 
 As the last step you can re-run the `example_analysis.ipynb` to get similar result.

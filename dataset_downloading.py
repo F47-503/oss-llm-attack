@@ -1,7 +1,8 @@
 import argparse
+import bz2
 import gc
 import os
-import pandas as pd
+import pickle
 import sys
 from datasets import load_dataset
 
@@ -111,12 +112,9 @@ def main():
         if samples >= args.max_samples:
             samples = 0
             dataset_counter += 1
-            pd.DataFrame(dataset).to_csv(
-                f"{args.output_prefix}{dataset_counter}",
-                index=False,
-                sep="\1",
-                escapechar="\2",
-            )
+            data = bz2.compress('\1'.join(dataset[args.code_field]).encode("utf-8"))
+            with open(f"{args.output_prefix}{dataset_counter}", "wb") as out_file:
+                pickle.dump(data, out_file)
             dataset = {}
             gc.collect()
             print(f"Dataset #{dataset_counter} processed")
