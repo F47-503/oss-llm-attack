@@ -27,10 +27,10 @@ def parse_arguments(argv):
         help="Dataset will be saved by chunks with common specified prefix. Default is 'dataset'.",
     )
     parser.add_argument(
-        "--threshold-size",
+        "--max-samples",
         type=int,
         default=None,
-        help="Upper bound on size of one dataset chunk in bytes.",
+        help="Upper bound on samples from dataset per chunk.",
     )
     parser.add_argument(
         "--max-chunks",
@@ -56,6 +56,12 @@ def parse_arguments(argv):
         default="train",
         help="Type of split for dataset. By default is 'train'.",
     )
+    parser.add_argument(
+        "--code-field",
+        type=str,
+        default=None,
+        help="If you want to save only specific column of dataset, you can specify it. If not specified, all columns will be saved."
+    )
     return parser.parse_args(argv)
 
 
@@ -65,7 +71,7 @@ def main():
         languages_file_path = os.path.join(os.getcwd(), args.languages_filename)
         if os.path.isfile(languages_file_path):
             with open(languages_file_path) as languages_file:
-                languages = languages_file.readlines()
+                languages = languages_file.read().split('\n')
 
     if not args.dataset_name:
         print("Dataset name is not set")
@@ -86,21 +92,24 @@ def main():
 
     dataset_counter = 0
 
+    samples = 0
+
     dataset = {}
 
-    if not args.threshold_size:
-        args.threshold_size = float("inf")
+    if not args.max_samples:
+        args.max_samples = float("inf")
 
     for sample in ds:
+        if args.code_field:
+            sample = {args.code_field: sample[args.code_field]}
         if not dataset:
             for field in sample:
                 dataset[field] = []
         for field in sample:
             dataset[field].append(sample[field])
-        total = 0
-        for field in dataset:
-            total += sys.getsizeof(dataset[field])
-        if total > args.threshold_size:
+        samples += 1
+        if samples >= args.max_samples:
+            samples = 0
             dataset_counter += 1
             pd.DataFrame(dataset).to_csv(
                 f"{args.output_prefix}{dataset_counter}",
